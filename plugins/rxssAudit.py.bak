@@ -1,0 +1,131 @@
+#!/usr/bin/env python
+# coding=utf-8
+# author: b0lu
+# mail: b0lu@163.com
+from sys import path
+from os.path import dirname, abspath
+path.append( dirname(dirname(abspath(__file__))) )
+import urlparse, requests
+from fuzzle.fuzzleRequests import fuzzleRequests 
+from fuzzle.payloads import xssPayloads
+from fuzzle.scanIssue import scanIssue
+from utils.DBMysql import gm
+from fuzzle import vulTypes
+from utils.GLog import elog, getDlog
+from utils.besm import besm
+
+class rxssAudit(fuzzleRequests):
+    def __init__(self, drequest):
+        self.dreq = drequest
+        self.url = drequest.url
+        up = urlparse.urlparse(self.url)
+        self.host = up.scheme+"://"+up.netloc
+        if up.query:
+            self.urlpath = up.path+"?"+up.query
+        else:
+            self.urlpath = up.path
+        
+        self.headers = drequest.headers
+        self.xpostdata = drequest.postdata
+        self.xss_detect_server = "http://localhost:8654"
+        self.vul_params = []
+        self.vpayloads = []
+        self.dlog = getDlog(__name__)
+        self.insertVul = lambda scanissue: gm.insertVul(scanissue)
+        self.__esm = besm(xssPayloads.payloads)
+        fuzzleRequests.__init__(self, self.urlpath, self.xpostdata, xssPayloads.payloads)
+        
+    #xss 检测  
+    def audit(self):
+        xss_fuzzle_requests = self.getFuzzleRequests()
+        for k,v in xss_fuzzle_requests.items():
+            for request  in v:
+                if k not in self.vul_params:
+                    xurl = self.host+request["url"]
+                    try:
+                        if not request["postdata"]:
+                            resp = requests.get(xurl, headers=self.headers)
+                        else:
+                            self.headers["Content-Type"] = "application/x-www-form-urlencoded"
+                            resp = requests.post(xurl, headers=self.headers, data= request["postdata"])
+                    except Exception,e:
+                        elog.exception(e)
+                        
+                    #f = re.findall(request["payload"], )
+                    #print request["payload"]
+                    f = resp.content.find(request["payload"])
+                    #f = self.__esm.query(resp.content)
+                    #print resp.content
+                    #print request["payload"]
+                    #print f
+                    '''    
+                    xss_post_data = {"url" : xurl,
+                        "fuzzle_msg": xssPayloads.fuzzle_msg,
+                        "headers" : str(resp.headers), 
+                        "response" : str(resp.content),
+                    }
+                    resp = requests.post(self.xss_detect_server, data=xss_post_data)
+                    xresult = resp.json()
+                    if xresult["isVul"] and k not in self.vul_params:
+                    '''
+                    if f != -1:
+                        if request["payload"] not in self.vpayloads:
+                            self.vpayloads.append(request["payload"])
+                        self.vul_params.append(k)
+                        print "vul param:"+str(self.vul_params)
+                        
+        
+        print "vul param:"+str(self.vul_params)
+
+        self.dlog.debug("[ RXSSAudit Vul Result ] method: %s, parameter: %s, payload: %s"%(self.dreq.method, str(self.vul_params), self.vpayloads))
+        if self.vul_params:
+            vul = scanIssue(rid=self.dreq.rid, type= vulTypes.rxss, host= self.dreq.host, url= self.dreq.url, method=self.dreq.method, parameters=','.join(self.vul_params), payload= self.vpayloads )
+            self.insertVul(vul)
+        
+        
+def getPluginClass():
+    return rxssAudit
+                
+if __name__ =='__main__':
+
+    '''
+    drequest = {
+               "url" : "http://localhost/xss.php",
+               "headers" : {},
+               "postdata" : "name=zhangqin&passwd=dddd"
+               }
+    xss = rxssAudit(drequest)
+    xss.audit()
+    
+    headers = {
+        "Cookie": "security=low; PHPSESSID=f1rs4sm4bhjtgevnujl38lf7j4"
+        }
+    drequest = {
+               "url" : "http://localhost/dvwa/vulnerabilities/xss_r/?name=ffff",
+               "headers" : headers,
+               #"postdata" : "name=zhangqin&passwd=dddd"
+               "postdata" : ""
+               }
+    xss = rxssAudit(drequest)
+    xss.audit()
+    
+    drequest = {
+           "url" : "http://localhost/phpinfo.php?sss=ddd&ddd=ss&ddd=xxx&fff=sss",
+           "headers" : {},
+           "postdata" : ""
+           }
+    xss = rxssAudit(drequest)
+    xss.audit()
+    '''
+    from utils.pluginsManager import pm
+    from utils.GRedis import gredis
+    from fuzzle.grequest import DRequest
+    
+    dreq = gredis.getTask() 
+            
+    if dreq:
+        dreq = DRequest(dreq)
+        #print dreq
+        xss = rxssAudit(dreq)
+        xss.audit()
+        #pm.run(dreq)

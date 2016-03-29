@@ -1,0 +1,9 @@
+GET /cjwk3/view/kuai3_weicha.php HTTP/1.1
+Host: zst.caipiao.suning.com
+User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64; rv:32.0) Gecko/20100101 Firefox/32.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: zh-cn,zh;q=0.8,en-us;q=0.5,en;q=0.3
+Accept-Encoding: gzip, deflate
+Cookie: Hm_lvt_cf0edaa8286c50688a44276a6661f3ef=1413342425; Hm_lpvt_cf0edaa8286c50688a44276a6661f3ef=1413342425; _snma=1%7C141334242607556372%7C1413342426075%7C1413342426075%7C1413342426074%7C1%7C1; _snmc=1; _snsr=direct%7Cdirect%7C%7C%7C; _snmb=141334242607728661%7C%7C1413342426077%7C1; _ga=GA1.2.410024944.1413342427; _gat=1; __utma=1.410024944.1413342427.1413342427.1413342427.1; __utmb=1.1.10.1413342427; __utmc=1; __utmz=1.1413342427.1.1.utmcsr=zst.caipiao.suning.com|utmccn=(referral)|utmcmd=referral|utmcct=/cjwk3/view/kuai3_weicha.php; __utmt=1
+Connection: keep-alive
+

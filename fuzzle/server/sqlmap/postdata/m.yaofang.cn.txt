@@ -1,0 +1,16 @@
+POST /cart/add_Cart_info HTTP/1.1
+Host: m.yaofang.cn
+User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64; rv:30.0) Gecko/20100101 Firefox/30.0
+Accept: */*
+Accept-Language: zh-cn,zh;q=0.8,en-us;q=0.5,en;q=0.3
+Accept-Encoding: gzip, deflate
+Content-Type: application/x-www-form-urlencoded; charset=UTF-8
+X-Requested-With: XMLHttpRequest
+Referer: http://m.yaofang.cn/p/brief/123236
+Content-Length: 36
+Cookie: PHPSESSID=g0bosqu1pdusqoo9aak3vap7q3; ECS_ID=m140629533700000000; Hm_lvt_d81e05c85bc379e6fe612547d0f60988=1406295346; Hm_lpvt_d81e05c85bc379e6fe612547d0f60988=1406295382; Hm_lvt_52a3d877eaca6c72ed8dfab9ad952c69=1406295356; Hm_lpvt_52a3d877eaca6c72ed8dfab9ad952c69=1406295388
+Connection: keep-alive
+Pragma: no-cache
+Cache-Control: no-cache
+
+goods_id=123236&r=0.6489842138645855

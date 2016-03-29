@@ -1,0 +1,105 @@
+#!/usr/bin/env python
+# coding=utf-8
+# author: b0lu
+# mail: b0lu@163.com
+import requests
+import os
+import urlparse
+from fuzzle.fuzzleRequests import fuzzleRequests 
+from fuzzle.payloads import xssPayloads
+
+class xssAudit(fuzzleRequests):
+    def __init__(self, drequest):
+        self.url = drequest["url"] 
+        up = urlparse.urlparse(self.url)
+        self.host = up.scheme+"://"+up.netloc
+        if up.query:
+            self.urlpath = up.path+"?"+up.query
+        else:
+            self.urlpath = up.path
+        print self.urlpath
+        self.headers = drequest["headers"] 
+        self.xpostdata = drequest["postdata"]  
+        self.xss_detect_server = "http://localhost:8654"
+        self.vul_params = []
+        fuzzleRequests.__init__(self, self.urlpath, self.xpostdata, xssPayloads.payloads)
+        
+    #xss 检测  
+    def audit(self):
+        xss_fuzzle_requests = self.getFuzzleRequests()
+        for k,v in xss_fuzzle_requests.items():
+            for request  in v:
+                xurl = self.host+request["url"]
+                if not request["postdata"]:
+                    resp = requests.get(xurl, headers=self.headers)
+                    print resp.content
+                else:
+                    self.headers["Content-Type"] = "application/x-www-form-urlencoded"
+                    resp = requests.post(xurl, headers=self.headers, data= request["postdata"])
+                    
+                xss_post_data = {"url" : xurl,
+                    "fuzzle_msg": xssPayloads.fuzzle_msg,
+                    "headers" : str(resp.headers), 
+                    "response" : str(resp.content),
+                }
+                resp = requests.post(self.xss_detect_server, data=xss_post_data)
+                xresult = resp.json()
+                if xresult["isVul"] and k not in self.vul_params:
+                    self.vul_params.append(k)
+                    break
+        
+        print self.vul_params
+        
+def getPluginClass():
+    return xssAudit
+                
+if __name__ =='__main__':
+    '''
+    headers = {"Content-Type": "application/x-www-form-urlencoded"} 
+    #postdata = {"name": "zhangqin", "passwd":"ddd"}
+    resp = requests.post(url, headers=headers, data=postdata)
+    print str(resp.content)
+    
+    drequest = {
+               "url" : "http://localhost/xss.php",
+               "headers" : {},
+               "postdata" : "name=zhangqin&passwd=dddd"
+               }
+    xss = xssAudit(drequest)
+    xss.audit()
+    
+    headers = {
+        "Cookie": "security=low; PHPSESSID=f1rs4sm4bhjtgevnujl38lf7j4"
+        }
+    drequest = {
+               "url" : "http://localhost/dvwa/vulnerabilities/xss_r/?name=ffff",
+               "headers" : headers,
+               #"postdata" : "name=zhangqin&passwd=dddd"
+               "postdata" : ""
+               }
+    xss = xssAudit(drequest)
+    xss.audit()
+    
+    drequest = {
+           "url" : "http://localhost/phpinfo.php?sss=ddd&ddd=ss&ddd=xxx&fff=sss",
+           "headers" : {},
+           "postdata" : ""
+           }
+    xss = xssAudit(drequest)
+    xss.audit()
+    '''
+    from utils.pluginsManager import pm
+    from utils.GRedis import gredis
+    from utils.utils import dealRequest
+    
+    dreq = gredis.getTask() 
+            
+    if dreq:
+        headers = {
+            "Cookie": "security=low; PHPSESSID=f1rs4sm4bhjtgevnujl38lf7j4"
+            }
+        dreq =  dealRequest(dreq)
+        print dreq
+        xss = xssAudit(dreq)
+        xss.audit()
+        #pm.run(dreq)
